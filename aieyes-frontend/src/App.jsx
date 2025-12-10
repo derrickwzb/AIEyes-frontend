@@ -139,7 +139,7 @@ function App() {
           formData.append("audio", wavBlob, "audio.wav");
 
           const backend = await fetch(
-            "http://ec2-3-107-191-110.ap-southeast-2.compute.amazonaws.com/analyze",
+            "https://api.derrickwzb.app/analyze",
             {
               method: "POST",
               body: formData,
