@@ -88,13 +88,27 @@ function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  /* -------------------------------------------------------
+     UPDATED CAMERA: FORCE BACK CAMERA + FALLBACK
+  --------------------------------------------------------*/
   useEffect(() => {
     async function enableCamera() {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: false,
-      });
-      videoRef.current.srcObject = stream;
+      try {
+        // Try exact environment camera
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { exact: "environment" } },
+          audio: false,
+        });
+        videoRef.current.srcObject = stream;
+      } catch (err) {
+        console.warn("Exact back camera not available, using fallback.");
+        // Fallback for Safari / older devices
+        const fallbackStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+          audio: false,
+        });
+        videoRef.current.srcObject = fallbackStream;
+      }
     }
     enableCamera();
   }, []);
@@ -158,9 +172,6 @@ function App() {
 
           console.log("Final textResponse:", textResponse);
 
-          /* -------------------------------------------------------
-             STEP 2 — GROQ TTS (RAW WAV BINARY)
-          --------------------------------------------------------*/
           const groqRes = await fetch(
             "https://api.groq.com/openai/v1/audio/speech",
             {
@@ -183,7 +194,6 @@ function App() {
             return;
           }
 
-          // 🔥 Now Groq returns real WAV binary (RIFF header)
           const audioBuffer = await groqRes.arrayBuffer();
           playAudio(audioBuffer);
 
